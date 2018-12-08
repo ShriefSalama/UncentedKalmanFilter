@@ -210,8 +210,13 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 	  H_input << 1,0,0,0,0,
 			  	 0,1,0,0,0;
 
+	  //add measurement noise covariance matrix
+	  MatrixXd R_laser = MatrixXd(2,2);
+	  R_laser <<  std_laspx_*std_laspx_, 0,
+	          	  0, std_laspy_*std_laspy_;
+
 	  MatrixXd z_pred = H_input * x_;
-	  VectorXd s = H_input * P_ * H_input.transpose() + R_ ;
+	  VectorXd s = H_input * P_ * H_input.transpose() + R_laser ;
 	  VectorXd k = P_ * H_input.transpose() * s.inverse();
 	  VectorXd y = z - z_pred ;
 
