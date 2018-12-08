@@ -7,6 +7,9 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
+float previous_timestamp_ = 0.0;
+
+
 /**
  * Initializes Unscented Kalman filter
  * This is scaffolding, do not modify
@@ -62,13 +65,12 @@ UKF::UKF() {
   n_aug_ = 7;
 
   //define spreading parameter
-  lambda_ = 3 - n_aug;
+  lambda_ = 3 - n_aug_;
 
   //create sigma point matrix
-  Xsig_pred_ = Xsig_pred = MatrixXd(n_x, 2 * n_aug + 1);
+  Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
 
   weights_ = VectorXd(2*n_aug_+1);
-
 }
 
 UKF::~UKF() {}
@@ -84,6 +86,33 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   Complete this function! Make sure you switch between lidar and radar
   measurements.
   */
+
+/*****************************************************************************
+	*  Prediction
+****************************************************************************/
+	  float dt = (meas_package.timestamp_ - previous_timestamp_)/1000000.0;
+	  previous_timestamp_ = meas_package.timestamp_ ;
+
+	  Prediction(dt);
+
+/*****************************************************************************
+	*  Update
+****************************************************************************/
+	  if (meas_package.sensor_type_ == MeasurementPackage::RADAR &&
+			  use_radar_ == true)
+	  {
+	    // Radar updates
+	      UpdateRadar(meas_package);
+	  }
+	  else if (meas_package.sensor_type_ == MeasurementPackage::LASER &&
+			  use_laser_ == true)
+	  {
+	    // Laser updates
+	      UpdateLidar(meas_package);
+	  }
+	  else{
+	  //do nothing
+	  }
 }
 
 /**
@@ -131,7 +160,7 @@ void UKF::Prediction(double delta_t) {
 /////////////////////////////////////////////////////////////////////////
 	    ///////////// END of Generating Sigma Points ////////////////
 //////////////////////////////////////////////////////////////////////////
-	    for(unsigned i = 0; i<2*n_aug+1 ; i++)
+	    for(unsigned i = 0; i<2*n_aug_+1 ; i++)
 	    {
 	      double px         = Xsig_aug.col(i)(0);
 	      double py         = Xsig_aug.col(i)(1);
@@ -174,7 +203,7 @@ void UKF::Prediction(double delta_t) {
 	       }
 
 	       //predict state covariance matrix
-	       for (unsigned int i = 0; i<2*n_aug+1; i++)
+	       for (unsigned int i = 0; i<2*n_aug_+1; i++)
 	       {
 	           VectorXd C = Xsig_pred_.col(i) - x;
 
@@ -202,7 +231,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   You'll also need to calculate the lidar NIS.
   */
 
-	//SSalama , Define R , and make sure of H
+	  VectorXd z = meas_package.raw_measurements_;
 	  long x_size = x_.size();
 	  MatrixXd I = MatrixXd::Identity(x_size, x_size);
 
@@ -243,6 +272,8 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 	  int n_z = 3;
 
 	  MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug_ + 1);
+
+	  VectorXd z = meas_package.raw_measurements_;
 
 	  for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 simga points
 
