@@ -7,9 +7,6 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
-float previous_timestamp_ = 0.0;
-
-
 /**
  * Initializes Unscented Kalman filter
  * This is scaffolding, do not modify
@@ -86,10 +83,41 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   Complete this function! Make sure you switch between lidar and radar
   measurements.
   */
+	  static float previous_timestamp_ = 0.0;
 
+/*****************************************************************************
+	*  Initialization
+****************************************************************************/
+	  if (!is_initialized_) {
+	    /**
+	    TODO:
+	      * Initialize the state ekf_.x_ with the first measurement.
+	      * Create the covariance matrix.
+	      * Remember: you'll need to convert radar from polar to cartesian coordinates.
+	    */
+	    // first measurement
+
+	    if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+	      /**
+	      Convert radar from polar to cartesian coordinates and initialize state.
+	      */
+	    }
+	    else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+	      /**
+	      Initialize state.
+	      */
+		x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
+	    is_initialized_ = true;
+	    }
+
+	    // done initializing, no need to predict or update
+	    previous_timestamp_ = meas_package.timestamp_ ;
+	    return;
+	  }
 /*****************************************************************************
 	*  Prediction
 ****************************************************************************/
+
 	  float dt = (meas_package.timestamp_ - previous_timestamp_)/1000000.0;
 	  previous_timestamp_ = meas_package.timestamp_ ;
 
